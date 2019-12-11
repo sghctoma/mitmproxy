@@ -1,5 +1,6 @@
 import os
 import errno
+import socks
 import select
 import socket
 import sys
@@ -9,10 +10,12 @@ import traceback
 
 from typing import Optional  # noqa
 
+from mitmproxy.net import server_spec
 from mitmproxy.net import tls
 
 from OpenSSL import SSL
 
+from mitmproxy import ctx
 from mitmproxy import certs
 from mitmproxy import exceptions
 from mitmproxy.coretypes import basethread
@@ -410,7 +413,15 @@ class TCPClient(_Connection):
 
     def makesocket(self, family, type, proto):
         # some parties (cuckoo sandbox) need to hook this
-        return socket.socket(family, type, proto)
+        s = socks.socksocket(family, type, proto)
+        if ctx.options.socks_proxy:
+            spec = server_spec.parse(ctx.options.socks_proxy)
+            proxy_type = {
+                "socks4": socks.SOCKS4,
+                "socks5": socks.SOCKS5
+            }[spec.scheme]
+            s.set_proxy(proxy_type, spec.address[0], spec.address[1])
+        return s
 
     def create_connection(self, timeout=None):
         # Based on the official socket.create_connection implementation of Python 3.6.

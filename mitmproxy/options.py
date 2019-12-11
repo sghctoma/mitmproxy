@@ -20,6 +20,10 @@ class Options(optmanager.OptManager):
             "Start a proxy server. Enabled by default."
         )
         self.add_option(
+            "socks_proxy", Optional[str], None,
+            "Address of the upstream SOCKS5 proxy server."
+        )
+        self.add_option(
             "showhost", bool, False,
             "Use the Host header to construct URLs for display."
         )

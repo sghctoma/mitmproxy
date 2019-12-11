@@ -39,7 +39,7 @@ def parse(server_spec: str) -> ServerSpec:
 
     # defaulting to https/port 443 may annoy some folks, but it's secure-by-default.
     scheme = m.group("scheme") or "https"
-    if scheme not in ("http", "https"):
+    if scheme not in ("http", "https", "socks4", "socks5"):
         raise ValueError("Invalid server scheme: {}".format(scheme))
 
     host = m.group("host")
@@ -54,7 +54,9 @@ def parse(server_spec: str) -> ServerSpec:
     else:
         port = {
             "http": 80,
-            "https": 443
+            "https": 443,
+            "socks4": 1080,
+            "socks5": 1080
         }[scheme]
     if not check.is_valid_port(port):
         raise ValueError("Invalid port: {}".format(port))
