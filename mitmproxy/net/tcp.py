@@ -414,13 +414,14 @@ class TCPClient(_Connection):
     def makesocket(self, family, type, proto):
         # some parties (cuckoo sandbox) need to hook this
         s = socks.socksocket(family, type, proto)
-        if ctx.options.socks_proxy:
-            spec = server_spec.parse(ctx.options.socks_proxy)
+        opts = ctx.options
+        if opts.socks_proxy:
+            spec = server_spec.parse(opts.socks_proxy)
             proxy_type = {
                 "socks4": socks.SOCKS4,
                 "socks5": socks.SOCKS5
             }[spec.scheme]
-            s.set_proxy(proxy_type, spec.address[0], spec.address[1])
+            s.set_proxy(proxy_type, spec.address[0], spec.address[1], opts.dns_over_socks)
         return s
 
     def create_connection(self, timeout=None):
@@ -448,7 +449,7 @@ class TCPClient(_Connection):
                         raise exceptions.TcpException(
                             "Failed to spoof the source address: " + str(e)
                         )
-                sock.connect(sa)
+                sock.connect(self.address)
                 return sock
 
             except socket.error as _:

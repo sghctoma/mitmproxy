@@ -21,7 +21,11 @@ class Options(optmanager.OptManager):
         )
         self.add_option(
             "socks_proxy", Optional[str], None,
-            "Address of the upstream SOCKS5 proxy server."
+            "Address of the upstream SOCKS proxy server."
+        )
+        self.add_option(
+            "dns_over_socks", bool, True,
+            "Resolve domain names over the upstream SOCKS proxy server."
         )
         self.add_option(
             "showhost", bool, False,
