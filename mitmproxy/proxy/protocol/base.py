@@ -119,6 +119,7 @@ class ServerConnectionMixin:
                 )
 
     def __make_server_conn(self, server_address):
+        proxy_spec = None
         if self.config.options.socks_proxy:
             proxy_spec = server_spec.parse(self.config.options.socks_proxy)
         if self.config.options.spoof_source_address and self.config.options.upstream_bind_address == '':

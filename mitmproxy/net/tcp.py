@@ -427,7 +427,13 @@ class TCPClient(_Connection):
         # https://github.com/python/cpython/blob/3cc5817cfaf5663645f4ee447eaed603d2ad290a/Lib/socket.py
 
         err = None
-        for res in socket.getaddrinfo(self.address[0], self.address[1], 0, socket.SOCK_STREAM):
+        if self.socks_proxy:
+            # we need to use the SOCKS proxy's information to call socks.socksocket(), just like in 
+            # socksocket.create_connection(). 
+            addresses = socket.getaddrinfo(self.socks_proxy.address[0], self.socks_proxy.address[1], 0, socket.SOCK_STREAM)
+        else:
+            addresses = socket.getaddrinfo(self.address[0], self.address[1], 0, socket.SOCK_STREAM)
+        for res in addresses:
             af, socktype, proto, canonname, sa = res
             sock = None
             try:
@@ -447,7 +453,17 @@ class TCPClient(_Connection):
                         raise exceptions.TcpException(
                             "Failed to spoof the source address: " + str(e)
                         )
-                sock.connect(self.address)
+                dest_addr = sa
+                if self.socks_proxy:
+                    # if we are using SOCKS proxy, ...
+                    if self.dns_over_socks:
+                        # ... and resolving names over the proxy, we need to coonect() to the given address.
+                        dest_addr = self.address
+                    else:
+                        # If we are resolving names locally while using SOCKS proxy, we need to resolve names now.
+                        # PySocks does not support IPv6, so we can use socket.gethostbyname().
+                        dest_addr = socket.gethostbyname(self.address[0])
+                sock.connect(dest_addr)
                 return sock
 
             except socket.error as _:
