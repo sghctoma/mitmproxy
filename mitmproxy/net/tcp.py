@@ -10,12 +10,10 @@ import traceback
 
 from typing import Optional  # noqa
 
-from mitmproxy.net import server_spec
 from mitmproxy.net import tls
 
 from OpenSSL import SSL
 
-from mitmproxy import ctx
 from mitmproxy import certs
 from mitmproxy import exceptions
 from mitmproxy.coretypes import basethread
@@ -359,7 +357,7 @@ class ConnectionCloser:
 
 class TCPClient(_Connection):
 
-    def __init__(self, address, source_address=None, spoof_source_address=None):
+    def __init__(self, address, source_address=None, spoof_source_address=None, socks_proxy=None, dns_over_socks=None):
         super().__init__(None)
         self.address = address
         self.source_address = source_address
@@ -367,6 +365,8 @@ class TCPClient(_Connection):
         self.server_certs = []
         self.sni = None
         self.spoof_source_address = spoof_source_address
+        self.socks_proxy = socks_proxy
+        self.dns_over_socks = dns_over_socks
 
     @property
     def ssl_verification_error(self) -> Optional[exceptions.InvalidCertificateException]:
@@ -414,14 +414,12 @@ class TCPClient(_Connection):
     def makesocket(self, family, type, proto):
         # some parties (cuckoo sandbox) need to hook this
         s = socks.socksocket(family, type, proto)
-        opts = ctx.options
-        if opts.socks_proxy:
-            spec = server_spec.parse(opts.socks_proxy)
+        if self.socks_proxy:
             proxy_type = {
                 "socks4": socks.SOCKS4,
                 "socks5": socks.SOCKS5
-            }[spec.scheme]
-            s.set_proxy(proxy_type, spec.address[0], spec.address[1], opts.dns_over_socks)
+            }[self.socks_proxy.scheme]
+            s.set_proxy(proxy_type, self.socks_proxy.address[0], self.socks_proxy.address[1], self.dns_over_socks)
         return s
 
     def create_connection(self, timeout=None):

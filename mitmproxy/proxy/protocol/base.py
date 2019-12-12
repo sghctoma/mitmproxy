@@ -1,6 +1,7 @@
 from mitmproxy import exceptions
 from mitmproxy import connections
 from mitmproxy import controller  # noqa
+from mitmproxy.net import server_spec
 from mitmproxy.proxy import config  # noqa
 
 
@@ -118,13 +119,18 @@ class ServerConnectionMixin:
                 )
 
     def __make_server_conn(self, server_address):
+        if self.config.options.socks_proxy:
+            proxy_spec = server_spec.parse(self.config.options.socks_proxy)
         if self.config.options.spoof_source_address and self.config.options.upstream_bind_address == '':
             return connections.ServerConnection(
-                server_address, (self.ctx.client_conn.address[0], 0), True)
+                server_address, (self.ctx.client_conn.address[0], 0), True,
+                proxy_spec, self.config.options.dns_over_socks
+            )
         else:
             return connections.ServerConnection(
                 server_address, (self.config.options.upstream_bind_address, 0),
-                self.config.options.spoof_source_address
+                self.config.options.spoof_source_address,
+                proxy_spec, self.config.options.dns_over_socks
             )
 
     def set_server(self, address):

@@ -179,8 +179,8 @@ class ServerConnection(tcp.TCPClient, stateobject.StateObject):
         timestamp_end: Connection end timestamp
     """
 
-    def __init__(self, address, source_address=None, spoof_source_address=None):
-        tcp.TCPClient.__init__(self, address, source_address, spoof_source_address)
+    def __init__(self, address, source_address=None, spoof_source_address=None, socks_proxy=None, dns_over_socks=None):
+        tcp.TCPClient.__init__(self, address, source_address, spoof_source_address, socks_proxy, dns_over_socks)
 
         self.id = str(uuid.uuid4())
         self.alpn_proto_negotiated = None
